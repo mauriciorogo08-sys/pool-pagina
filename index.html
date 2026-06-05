@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clase 3 - Edición Gemini AI</title>
+    <!-- Tailwind CSS for vintage Yahoo styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for classic icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a103c; /* Classic deep purple background */
+            background-image: radial-gradient(circle at center, #2e1a5e 0%, #0d0722 100%);
+            overflow-x: hidden;
+        }
+
+        /* Retro scrollbar for chat */
+        .vintage-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .vintage-scroll::-webkit-scrollbar-track {
+            background: #241442;
+        }
+        .vintage-scroll::-webkit-scrollbar-thumb {
+            background: #5d34a5;
+            border-radius: 4px;
+        }
+        .vintage-scroll::-webkit-scrollbar-thumb:hover {
+            background: #7a46d1;
+        }
+
+        /* Pulse animation for active turn */
+        @keyframes activePulse {
+            0%, 100% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; }
+            50% { border-color: #ff8800; box-shadow: 0 0 20px #ff8800; }
+        }
+        .active-turn {
+            animation: activePulse 2s infinite;
+        }
+
+        /* AI Glowing visual accents */
+        @keyframes aiGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(6, 182, 212, 0.4), inset 0 0 5px rgba(6, 182, 212, 0.2); }
+            50% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.8), inset 0 0 10px rgba(6, 182, 212, 0.4); }
+        }
+        .gemini-glow {
+            animation: aiGlow 3s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between">
+
+<header class="bg-[#1e1233] border-b-4 border-[#3c2466] py-3 px-4 shadow-xl">
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
+        <!-- Logo and Room Stats -->
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 rounded-xl border-2 border-purple-400 shadow-[0_0_15px_rgba(147,51,234,0.5)]">
+                <span class="text-white font-extrabold text-2xl tracking-tight">Yahoo!<span class="text-yellow-400 font-serif">!</span> <span class="text-yellow-300 text-lg font-light tracking-widest uppercase">Games</span></span>
+            </div>
+            <div class="hidden sm:flex flex-col">
+                <span class="text-xs text-purple-300 font-mono">Billiards Room #24</span>
+                <span class="text-xs text-cyan-400 flex items-center gap-1">
+                    <span class="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></span> Gemini AI Activa
+                </span>
+            </div>
+        </div>
+
+        <!-- Mode Selectors and Game Status Indicators -->
+        <div class="flex items-center gap-2 flex-wrap">
+            <button id="btn-pvp" onclick="setGameMode('pvp')" class="px-3 py-1.5 rounded bg-slate-700 hover:bg-slate-600 border-b-2 border-slate-900 text-xs font-semibold transition active:translate-y-0.5 shadow opacity-70">
+                <i class="fa-solid fa-users mr-1"></i> 1 vs 1 Local
+            </button>
+            <button id="btn-vs-ai" onclick="setGameMode('ai')" class="px-3 py-1.5 rounded bg-purple-700 border-b-2 border-purple-900 text-xs font-semibold transition active:translate-y-0.5 shadow">
+                <i class="fa-solid fa-robot mr-1"></i> Vs Gemini Bot AI
+            </button>
+            <button id="btn-practice" onclick="setGameMode('practice')" class="px-3 py-1.5 rounded bg-slate-700 hover:bg-slate-600 border-b-2 border-slate-900 text-xs font-semibold transition active:translate-y-0.5 shadow opacity-70">
+                <i class="fa-solid fa-graduation-cap mr-1"></i> Práctica Libre
+            </button>
+            <button id="btn-reset" onclick="resetTable()" class="px-3 py-1.5 rounded bg-red-700 hover:bg-red-600 border-b-2 border-red-900 text-xs font-semibold transition active:translate-y-0.5 shadow">
+                <i class="fa-solid fa-rotate-left mr-1"></i> Reiniciar
+            </button>
+        </div>
+
+        <!-- Gemini API Key configuration overlay inline -->
+        <div class="flex items-center gap-2 bg-[#150d26] px-3 py-1.5 rounded-lg border border-[#06b6d4]/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]">
+            <div class="flex items-center gap-1.5 text-xs">
+                <i class="fa-solid fa-key text-cyan-400"></i>
+                <span class="text-slate-300 font-mono text-[11px]">API Key:</span>
+            </div>
+            <input type="password" id="gemini-key-input" placeholder="Automatica (Inyectada)" class="bg-slate-950 text-slate-100 border border-purple-900/50 rounded px-2 py-0.5 text-[11px] w-36 focus:outline-none focus:border-cyan-400 placeholder:text-slate-600">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" id="api-status-dot" title="Gemini Lista"></span>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto w-full p-2 md:p-4 flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
+    
+    <!-- LEFT & CENTER: The Pool Arena and Scoreboard -->
+    <div class="lg:col-span-3 flex flex-col gap-3">
+        
+        <!-- Scoreboard / Status Indicator -->
+        <div class="bg-[#1b0f34]/80 backdrop-blur-md rounded-xl p-3 border border-purple-900/40 grid grid-cols-3 items-center text-center shadow-lg">
+            <!-- Player 1 Status -->
+            <div id="player1-card" class="p-2 rounded-lg border border-transparent transition-all flex flex-col items-center">
+                <div class="flex items-center gap-2">
+                    <img src="https://placehold.co/40x40/5c34a5/ffffff?text=P1" id="p1-avatar" class="w-8 h-8 rounded-full border border-purple-400" alt="Avatar Player 1">
+                    <div class="text-left">
+                        <div class="font-bold text-sm tracking-wide" id="p1-name">Tú</div>
+                        <div class="text-xs text-purple-300" id="p1-type-badge">Por asignar</div>
+                    </div>
+                </div>
+                <!-- Mini balls indicator -->
+                <div id="p1-balls-left" class="flex gap-1 mt-1.5 flex-wrap justify-center"></div>
+            </div>
+
+            <!-- Match Banner -->
+            <div class="flex flex-col items-center justify-center">
+                <div id="turn-banner" class="bg-yellow-400 text-slate-900 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wider uppercase">
+                    ¡Cargando el juego!
+                </div>
+                <div id="status-message" class="text-xs text-purple-200 mt-2 italic font-mono max-w-[200px] truncate">
+                    Coloca la bola y apunta...
+                </div>
+            </div>
+
+            <!-- Player 2 Status -->
+            <div id="player2-card" class="p-2 rounded-lg border border-transparent transition-all flex flex-col items-center">
+                <div class="flex items-center gap-2">
+                    <div class="text-right">
+                        <div class="font-bold text-sm tracking-wide" id="p2-name">Yahoo! Bot</div>
+                        <div class="text-xs text-purple-300" id="p2-type-badge">Por asignar</div>
+                    </div>
+                    <img src="https://placehold.co/40x40/a855f7/ffffff?text=AI" id="p2-avatar" class="w-8 h-8 rounded-full border border-cyan-400 shadow-[0_0_5px_rgba(6,182,212,0.5)]" alt="Avatar Player 2">
+                </div>
+                <!-- Mini balls indicator -->
+                <div id="p2-balls-left" class="flex gap-1 mt-1.5 flex-wrap justify-center"></div>
+            </div>
+        </div>
+
+        <!-- Interactive Game Table Canvas Wrapper -->
+        <div class="relative bg-amber-950 p-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-4 border-amber-900 flex justify-center items-center">
+            <!-- Vintage Table Felt Texture with Canvas inside -->
+            <div class="w-full max-w-4xl aspect-[2/1] relative overflow-hidden rounded-lg bg-[#0f5431] shadow-[inset_0_0_80px_rgba(0,0,0,0.9)]">
+                <canvas id="pool-canvas" class="w-full h-full block cursor-crosshair"></canvas>
+            </div>
+            
+            <!-- Power Bar Visual Overlay (Vertical, Right Side) -->
+            <div class="absolute right-[-4px] top-1/2 -translate-y-1/2 bg-[#1b0f34]/90 p-2.5 rounded-l-xl border-l border-y border-purple-500/30 flex flex-col items-center gap-1 shadow-2xl">
+                <span class="text-[9px] text-purple-300 font-bold uppercase tracking-wider writing-mode-vertical">Poder</span>
+                <div class="w-4 h-28 bg-slate-950 rounded-full border border-purple-900/50 overflow-hidden relative flex flex-col justify-end">
+                    <div id="power-indicator" class="w-full bg-gradient-to-t from-yellow-500 via-orange-500 to-red-600 transition-all duration-75 h-0"></div>
+                </div>
+                <span id="power-percent" class="text-[10px] text-yellow-400 font-mono">0%</span>
+            </div>
+        </div>
+
+        <!-- Bottom Controls Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            
+            <!-- Target Spin Widget (English Selector) -->
+            <div class="bg-[#1b0f34]/80 rounded-xl p-3 border border-purple-900/40 flex items-center justify-between shadow-lg gap-2">
+                <div>
+                    <h3 class="font-bold text-xs text-purple-300 uppercase tracking-wider mb-1">Efecto / Bola (Spin)</h3>
+                    <p class="text-[10px] text-slate-300 leading-relaxed">Arrastra el punto rojo para definir el impacto en la bola blanca.</p>
+                </div>
+                <div class="relative w-16 h-16 rounded-full bg-white border-2 border-slate-500 cursor-crosshair flex items-center justify-center shadow-[inset_0_3px_8px_rgba(0,0,0,0.3)] select-none" id="spin-widget">
+                    <!-- Target marker -->
+                    <div id="spin-marker" class="absolute w-3 h-3 bg-red-600 rounded-full border border-white shadow shadow-black" style="left: calc(50% - 6px); top: calc(50% - 6px);"></div>
+                </div>
+            </div>
+
+            <!-- Gemini Tactical Coach Panel -->
+            <div class="bg-[#1b0f34]/80 rounded-xl p-3 border border-[#06b6d4]/40 flex flex-col justify-between shadow-lg gemini-glow relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 opacity-10">
+                    <i class="fa-solid fa-wand-magic-sparkles text-7xl text-cyan-400"></i>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <h4 class="font-bold text-xs text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Entrenador Gemini AI
+                        </h4>
+                        <span class="text-[9px] bg-cyan-950 border border-cyan-800 text-cyan-300 px-1.5 py-0.5 rounded">Táctico</span>
+                    </div>
+                    <p class="text-[10px] text-slate-300 leading-normal" id="coach-hint">¿No estás seguro de tu próximo tiro? ¡Deja que la IA analice la mesa y te dé la jugada de oro!</p>
+                </div>
+                <div class="mt-2 flex gap-1.5">
+                    <button id="btn-coach-advice" onclick="askGeminiCoach()" class="w-full py-1.5 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 border border-cyan-400/30 text-white font-bold rounded text-[10px] tracking-wider uppercase transition flex items-center justify-center gap-1.5">
+                        <i id="coach-btn-icon" class="fa-solid fa-brain"></i>
+                        <span id="coach-btn-text">Pedir Consejo de Tiro</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Guidelines / Help Tips -->
+            <div class="bg-[#1b0f34]/80 rounded-xl p-3 border border-purple-900/40 flex flex-col justify-center shadow-lg">
+                <h4 class="font-bold text-xs text-purple-300 uppercase tracking-wider mb-1"><i class="fa-solid fa-gamepad mr-1"></i> Controles Rápidos</h4>
+                <ul class="text-[10px] text-slate-300 space-y-1">
+                    <li><strong class="text-yellow-400">Mouse/Touch:</strong> Mueve el cursor para apuntar el tiro.</li>
+                    <li><strong class="text-yellow-400">Clic Izquierdo (Drag):</strong> Arrastra hacia atrás para medir la fuerza.</li>
+                    <li><strong class="text-yellow-400">Espacio:</strong> Activa o desactiva la línea fina de guía.</li>
+                    <li><strong class="text-yellow-400">Foul:</strong> Si hay falta, arrastra la bola blanca para reubicarla.</li>
+                </ul>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: Classic Yahoo! Chat and Lobby Simulator + Coach Output -->
+    <div class="bg-[#1b0f34]/90 border border-purple-900/40 rounded-xl p-3 shadow-2xl flex flex-col h-[500px] lg:h-auto min-h-[400px]">
+        
+        <!-- Tab Selectors -->
+        <div class="flex border-b border-[#3c2466] mb-2 text-xs font-semibold">
+            <button onclick="switchTab('chat')" id="tab-btn-chat" class="flex-1 pb-2 text-center text-yellow-400 border-b-2 border-yellow-400">
+                <i class="fa-solid fa-comments mr-1"></i> Chat
+            </button>
+            <button onclick="switchTab('coach')" id="tab-btn-coach" class="flex-1 pb-2 text-center text-purple-400 border-b-2 border-transparent">
+                <i class="fa-solid fa-graduation-cap mr-1"></i> Consejero AI
+            </button>
+        </div>
+
+        <!-- TAB CONTENT: CHAT -->
+        <div id="tab-content-chat" class="flex-1 flex flex-col overflow-hidden">
+            <!-- Room Info -->
+            <div class="pb-2 mb-2 flex justify-between items-center border-b border-[#3c2466]/40">
+                <div>
+                    <p class="text-[10px] text-purple-300 font-mono">Conversación con el rival</p>
+                </div>
+                <span class="bg-purple-950 border border-purple-800 text-[10px] px-2 py-0.5 rounded font-bold text-purple-300 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    Rival: <span id="rival-status">Gemini AI</span>
+                </span>
+            </div>
+
+            <!-- Chat History -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto vintage-scroll bg-slate-950/70 p-2 rounded-lg border border-[#3c2466]/40 space-y-2 mb-2 text-xs">
+                <div class="text-blue-400 font-semibold">[Sistema]: ¡Bienvenido a Yahoo! Billares Retro!</div>
+                <div class="text-slate-400 italic text-[11px]">[Sistema]: El oponente está conectado mediante la API de Gemini 3-Flash. ¡Sugerencia: puedes hablarle libremente en el chat!</div>
+                <div class="text-[#a855f7]"><strong class="font-bold text-purple-300">Yahoo! Bot:</strong> hola q tal!! listos para jugar? :) buena suerte con los tiros!! aver q tal andas xd</div>
+            </div>
+
+            <!-- Quick Phrases (Vintage Yahoo! Games Feature) -->
+            <div class="mb-2">
+                <span class="text-[9px] text-purple-400 uppercase font-bold tracking-widest block mb-1">Frases Rápidas:</span>
+                <div class="grid grid-cols-2 gap-1 text-[10px]">
+                    <button onclick="sendChatMessage('¡Buen tiro!')" class="py-1 px-1.5 bg-[#251744] hover:bg-[#3b256d] rounded border border-purple-900 text-left truncate text-purple-300">¡Buen tiro!</button>
+                    <button onclick="sendChatMessage('¡Noooo, mala suerte!')" class="py-1 px-1.5 bg-[#251744] hover:bg-[#3b256d] rounded border border-purple-900 text-left truncate text-purple-300">¡Qué mala suerte!</button>
+                    <button onclick="sendChatMessage('¡Gracias!')" class="py-1 px-1.5 bg-[#251744] hover:bg-[#3b256d] rounded border border-purple-900 text-left truncate text-purple-300">¡Gracias!</button>
+                    <button onclick="sendChatMessage('suerte con eso, bot xd')" class="py-1 px-1.5 bg-[#251744] hover:bg-[#3b256d] rounded border border-purple-900 text-left truncate text-purple-300">suerte con eso xd</button>
+                </div>
+            </div>
+
+            <!-- Input Box -->
+            <form id="chat-form" class="flex gap-1.5" onsubmit="handleChatSubmit(event)">
+                <input type="text" id="chat-input" placeholder="Escribe al bot de Gemini..." class="flex-1 bg-slate-900 border border-purple-800 rounded px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1.5 rounded transition text-xs flex items-center justify-center">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- TAB CONTENT: GEMINI COACH ADVICE -->
+        <div id="tab-content-coach" class="flex-1 hidden flex-col overflow-hidden">
+            <div class="bg-slate-950/70 p-3 rounded-lg border border-[#06b6d4]/40 flex-1 overflow-y-auto vintage-scroll flex flex-col justify-between text-xs space-y-3">
+                <div class="flex-1">
+                    <div class="flex items-center gap-1 text-cyan-400 font-bold border-b border-[#06b6d4]/20 pb-1 mb-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Análisis de Mesa Gemini
+                    </div>
+                    <div id="coach-content-output" class="text-slate-200 leading-relaxed whitespace-pre-line space-y-2">
+                        Haz clic en el botón <strong class="text-cyan-400">"Pedir Consejo de Tiro"</strong> abajo a la izquierda para que Gemini analice las posiciones exactas de todas tus bolas, troneras y te recomiende la mejor estrategia y vector de disparo óptimo.
+                    </div>
+                </div>
+                <div class="p-2.5 bg-[#06b6d4]/10 border border-[#06b6d4]/30 rounded-lg text-[11px] text-cyan-300">
+                    <i class="fa-solid fa-info-circle mr-1"></i> <strong>Tip:</strong> El análisis considera la bola en mano, la regla del 8 y las posibles faltas por golpear una bola del oponente.
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Game Notification Banner Toast Area -->
+<div id="game-toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-6 py-3 rounded-xl font-bold shadow-2xl transition-all duration-300 opacity-0 pointer-events-none transform translate-y-4 flex items-center gap-2 z-50">
+    <i class="fa-solid fa-circle-exclamation text-lg"></i>
+    <span id="game-toast-text">¡Falta! Bola en mano.</span>
+</div>
+
+<footer class="bg-[#10091d] text-center py-2.5 text-[10px] text-purple-400 border-t border-[#23153b]">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center px-4 gap-2">
+        <span>© 1999-2006 Yahoo! Games Network - Recreación Nostálgica potenciada por Gemini LLM</span>
+        <div class="flex gap-3">
+            <span>Servidor API: <strong class="text-cyan-400">Online</strong></span>
+            <span>Ping API: <span id="api-ping-label" class="text-green-400 font-bold">Calculando...</span></span>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Set up Web Audio API Context safely for retro sound effects
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // Sound effect generator
+    function playRetroSound(type, pitch = 1.0) {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            
+            const masterVol = 0.5;
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'clack') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(350 * pitch, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+                
+                gainNode.gain.setValueAtTime(masterVol * 0.8, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } 
+            else if (type === 'cushion') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(120 * pitch, now);
+                osc.frequency.exponentialRampToValueAtTime(60, now + 0.15);
+                
+                gainNode.gain.setValueAtTime(masterVol, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } 
+            else if (type === 'pocket') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400 * pitch, now);
+                osc.frequency.exponentialRampToValueAtTime(120, now + 0.35);
+                
+                gainNode.gain.setValueAtTime(masterVol * 0.6, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } 
+            else if (type === 'scratch') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.4);
+                
+                gainNode.gain.setValueAtTime(masterVol * 0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+        } catch (e) {
+            console.warn("Audio Context block or error:", e);
+        }
+    }
+
+    const canvas = document.getElementById('pool-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Canvas size matching standard 2:1 aspect ratio
+    const TABLE_WIDTH = 800;
+    const TABLE_HEIGHT = 400;
+    
+    let canvasScale = 1;
+
+    const CUSHION_LEFT = 36;
+    const CUSHION_RIGHT = TABLE_WIDTH - 36;
+    const CUSHION_TOP = 36;
+    const CUSHION_BOTTOM = TABLE_HEIGHT - 36;
+    
+    const BALL_RADIUS = 11;
+    const BALL_MASS = 1.0;
+    const FRICTION = 0.982; 
+
+    let gameMode = 'ai'; 
+
+    let players = [
+        { name: "Tú", type: null, pocketed: 0 }, 
+        { name: "Yahoo! Bot", type: null, pocketed: 0 }
+    ];
+    let activePlayerIndex = 0; 
+    let balls = [];
+    let whiteBall = null;
+    let eightBall = null;
+
+    let isAiming = false;
+    let aimAngle = 0; 
+    let isDragging = false;
+    let dragStartPoint = { x: 0, y: 0 };
+    let dragDistance = 0;
+    const MAX_DRAG_DIST = 120; 
+    let currentPower = 0;
+
+    let englishX = 0;
+    let englishY = 0;
+
+    let showExtendedGuide = true;
+    let isBallInHand = true; 
+
+    let firstBallHitThisTurn = null;
+    let ballsPocketedThisTurn = [];
+    let isMoving = false; 
+    let gamePhase = "rack"; 
+    let statusLog = "¡Coloca la bola blanca y dispara para abrir!";
+
+    const BALL_COLORS = {
+        1: '#ecc94b', 2: '#3182ce', 3: '#e53e3e', 4: '#805ad5', 5: '#dd6b20', 6: '#38a169', 7: '#744210', 
+        8: '#111111', 
+        9: '#ecc94b', 10: '#3182ce', 11: '#e53e3e', 12: '#805ad5', 13: '#dd6b20', 14: '#38a169', 15: '#744210',
+    };
+
+    class Ball {
+        constructor(number, x, y) {
+            this.number = number;
+            this.x = x;
+            this.y = y;
+            this.vx = 0;
+            this.vy = 0;
+            this.spinX = 0; 
+            this.spinY = 0;
+            this.isPocketed = false;
+            this.radius = BALL_RADIUS;
+            this.mass = BALL_MASS;
+            this.color = number === 0 ? '#ffffff' : BALL_COLORS[number];
+            this.type = number === 0 ? 'white' : (number === 8 ? 'black' : (number <= 7 ? 'solids' : 'stripes'));
+        }
+
+        update() {
+            if (this.isPocketed) return;
+
+            if (this.number === 0) {
+                this.vx += this.spinX * 0.05;
+                this.vy += this.spinY * 0.05;
+                this.spinX *= 0.90; 
+                this.spinY *= 0.90;
+            }
+
+            this.x += this.vx;
+            this.y += this.vy;
+
+            this.vx *= FRICTION;
+            this.vy *= FRICTION;
+
+            if (Math.hypot(this.vx, this.vy) < 0.05) {
+                this.vx = 0;
+                this.vy = 0;
+            }
+        }
+    }
+
+    const pockets = [
+        { x: CUSHION_LEFT, y: CUSHION_TOP, radius: 21 },                       
+        { x: TABLE_WIDTH / 2, y: CUSHION_TOP - 4, radius: 20 },               
+        { x: CUSHION_RIGHT, y: CUSHION_TOP, radius: 21 },                      
+        { x: CUSHION_LEFT, y: CUSHION_BOTTOM, radius: 21 },                    
+        { x: TABLE_WIDTH / 2, y: CUSHION_BOTTOM + 4, radius: 20 },            
+        { x: CUSHION_RIGHT, y: CUSHION_BOTTOM, radius: 21 }                   
+    ];
+
+    function setupClassicRack() {
+        balls = [];
+
+        whiteBall = new Ball(0, TABLE_WIDTH * 0.25, TABLE_HEIGHT * 0.5);
+        balls.push(whiteBall);
+
+        const rackStartX = TABLE_WIDTH * 0.70;
+        const rackStartY = TABLE_HEIGHT * 0.5;
+        const spacing = BALL_RADIUS * 2 + 0.5; 
+
+        const rackLayout = [
+            1,          
+            2, 9,       
+            3, 8, 10,   
+            11, 7, 12, 4, 
+            13, 5, 14, 15, 6 
+        ];
+
+        let layoutIndex = 0;
+        for (let col = 0; col < 5; col++) {
+            const x = rackStartX + col * (spacing * Math.cos(Math.PI / 6));
+            const yStart = rackStartY - col * (spacing / 2);
+            for (let row = 0; row <= col; row++) {
+                const y = yStart + row * spacing;
+                const ballNum = rackLayout[layoutIndex++];
+                const ball = new Ball(ballNum, x, y);
+                if (ballNum === 8) eightBall = ball;
+                balls.push(ball);
+            }
+        }
+
+        isBallInHand = true; 
+        isAiming = false;
+        gamePhase = "rack";
+        firstBallHitThisTurn = null;
+        ballsPocketedThisTurn = [];
+
+        updateStatusMessage("Alinea la bola blanca y ¡rompe la mesa!");
+        renderStatusUI();
+    }
+
+    function resizeCanvas() {
+        const rect = canvas.parentNode.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        canvasScale = rect.width / TABLE_WIDTH;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('load', () => {
+        resizeCanvas();
+        setupClassicRack();
+        startLoop();
+        pingGeminiService();
+    });
+
+    function getCanvasCoords(event) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+        if (event.touches && event.touches.length > 0) {
+            clientX = event.touches[0].clientX;
+            clientY = event.touches[0].clientY;
+        } else {
+            clientX = event.clientX;
+            clientY = event.clientY;
+        }
+        return {
+            x: (clientX - rect.left) / canvasScale,
+            y: (clientY - rect.top) / canvasScale
+        };
+    }
+
+    canvas.addEventListener('mousedown', handlePointerDown);
+    canvas.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        handlePointerDown(e);
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handlePointerMove(e);
+    });
+    window.addEventListener('touchend', handlePointerUp);
+
+    function handlePointerDown(e) {
+        if (isMoving || gamePhase === "gameover") return;
+        
+        const coords = getCanvasCoords(e);
+        
+        if (isBallInHand) {
+            const dist = Math.hypot(coords.x - whiteBall.x, coords.y - whiteBall.y);
+            if (dist < BALL_RADIUS * 2) {
+                isDragging = true;
+                dragStartPoint = { x: coords.x, y: coords.y };
+            }
+        } else {
+            isDragging = true;
+            dragStartPoint = { x: coords.x, y: coords.y };
+            dragDistance = 0;
+            currentPower = 0;
+        }
+    }
+
+    function handlePointerMove(e) {
+        if (isMoving || gamePhase === "gameover") return;
+
+        const coords = getCanvasCoords(e);
+
+        if (isBallInHand && isDragging) {
+            let proposedX = Math.max(CUSHION_LEFT + BALL_RADIUS, Math.min(CUSHION_RIGHT - BALL_RADIUS, coords.x));
+            let proposedY = Math.max(CUSHION_TOP + BALL_RADIUS, Math.min(CUSHION_BOTTOM - BALL_RADIUS, coords.y));
+            
+            if (gamePhase === "rack") {
+                proposedX = Math.min(TABLE_WIDTH * 0.29, proposedX);
+            }
+
+            let overlaps = false;
+            for (let b of balls) {
+                if (b.number !== 0 && !b.isPocketed) {
+                    if (Math.hypot(b.x - proposedX, b.y - proposedY) < BALL_RADIUS * 2) {
+                        overlaps = true;
+                    }
+                }
+            }
+            if (!overlaps) {
+                whiteBall.x = proposedX;
+                whiteBall.y = proposedY;
+            }
+        } else if (isDragging) {
+            const dy = coords.y - whiteBall.y;
+            const dx = coords.x - whiteBall.x;
+            aimAngle = Math.atan2(dy, dx);
+
+            const pullBackDistance = Math.hypot(coords.x - dragStartPoint.x, coords.y - dragStartPoint.y);
+            dragDistance = Math.min(pullBackDistance, MAX_DRAG_DIST);
+            currentPower = (dragDistance / MAX_DRAG_DIST) * 100;
+            updatePowerIndicator(currentPower);
+        } else {
+            const dy = coords.y - whiteBall.y;
+            const dx = coords.x - whiteBall.x;
+            aimAngle = Math.atan2(dy, dx);
+        }
+    }
+
+    function handlePointerUp() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        if (isBallInHand) {
+            isBallInHand = false;
+            showToast("Bola colocada. ¡Apunta y dispara!");
+            if (gamePhase === "rack") {
+                gamePhase = "play";
+            }
+        } else if (currentPower > 5) {
+            shootBall();
+        } else {
+            currentPower = 0;
+            updatePowerIndicator(0);
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            showExtendedGuide = !showExtendedGuide;
+            showToast(showExtendedGuide ? "Guía predictiva: Activada" : "Guía predictiva: Desactivada");
+        }
+    });
+
+    function shootBall() {
+        const powerCoeff = 0.28; 
+        const totalVel = currentPower * powerCoeff;
+
+        whiteBall.vx = -Math.cos(aimAngle) * totalVel;
+        whiteBall.vy = -Math.sin(aimAngle) * totalVel;
+
+        whiteBall.spinX = -englishX * (currentPower * 0.1);
+        whiteBall.spinY = -englishY * (currentPower * 0.1);
+
+        playRetroSound('pocket', 1.3);
+
+        currentPower = 0;
+        updatePowerIndicator(0);
+        isMoving = true;
+        firstBallHitThisTurn = null;
+        ballsPocketedThisTurn = [];
+    }
+
+    function checkPhysicsLoop() {
+        let elementsMoving = false;
+        for (let b of balls) {
+            if (!b.isPocketed && (b.vx !== 0 || b.vy !== 0)) {
+                elementsMoving = true;
+                break;
+            }
+        }
+
+        if (isMoving && !elementsMoving) {
+            isMoving = false;
+            resolveTurnRules();
+        }
+    }
+
+    function runPhysicsTicks() {
+        const subSteps = 8;
+        for (let step = 0; step < subSteps; step++) {
+            
+            for (let b of balls) {
+                if (!b.isPocketed) {
+                    b.update();
+                }
+            }
+
+            for (let b of balls) {
+                if (b.isPocketed) continue;
+                for (let pocket of pockets) {
+                    const dist = Math.hypot(b.x - pocket.x, b.y - pocket.y);
+                    if (dist < pocket.radius + 3) {
+                        b.isPocketed = true;
+                        b.vx = 0;
+                        b.vy = 0;
+                        ballsPocketedThisTurn.push(b);
+                        playRetroSound('pocket', 1.0 - b.number * 0.03);
+                        break;
+                    }
+                }
+            }
+
+            for (let b of balls) {
+                if (b.isPocketed) continue;
+
+                if (b.x - b.radius < CUSHION_LEFT) {
+                    b.x = CUSHION_LEFT + b.radius;
+                    b.vx = -b.vx * 0.88;
+                    b.vy += b.spinY * 0.5;
+                    playRetroSound('cushion', 1.0);
+                } else if (b.x + b.radius > CUSHION_RIGHT) {
+                    b.x = CUSHION_RIGHT - b.radius;
+                    b.vx = -b.vx * 0.88;
+                    b.vy += b.spinY * 0.5;
+                    playRetroSound('cushion', 1.0);
+                }
+
+                if (b.y - b.radius < CUSHION_TOP) {
+                    b.y = CUSHION_TOP + b.radius;
+                    b.vy = -b.vy * 0.88;
+                    b.vx += b.spinX * 0.5;
+                    playRetroSound('cushion', 1.0);
+                } else if (b.y + b.radius > CUSHION_BOTTOM) {
+                    b.y = CUSHION_BOTTOM - b.radius;
+                    b.vy = -b.vy * 0.88;
+                    b.vx += b.spinX * 0.5;
+                    playRetroSound('cushion', 1.0);
+                }
+            }
+
+            for (let i = 0; i < balls.length; i++) {
+                let b1 = balls[i];
+                if (b1.isPocketed) continue;
+
+                for (let j = i + 1; j < balls.length; j++) {
+                    let b2 = balls[j];
+                    if (b2.isPocketed) continue;
+
+                    const dx = b2.x - b1.x;
+                    const dy = b2.y - b1.y;
+                    const distance = Math.hypot(dx, dy);
+
+                    if (distance < b1.radius + b2.radius) {
+                        const overlap = (b1.radius + b2.radius) - distance;
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+
+                        b1.x -= nx * overlap * 0.5;
+                        b1.y -= ny * overlap * 0.5;
+                        b2.x += nx * overlap * 0.5;
+                        b2.y += ny * overlap * 0.5;
+
+                        if (b1.number === 0 && firstBallHitThisTurn === null) {
+                            firstBallHitThisTurn = b2;
+                        }
+
+                        const kx = b1.vx - b2.vx;
+                        const ky = b1.vy - b2.vy;
+                        const p = 2 * (nx * kx + ny * ky) / (b1.mass + b2.mass);
+
+                        b1.vx -= p * b2.mass * nx;
+                        b1.vy -= p * b2.mass * ny;
+                        b2.vx += p * b1.mass * nx;
+                        b2.vy += p * b1.mass * ny;
+
+                        if (b1.number === 0) {
+                            b2.vx += b1.spinX * 0.1;
+                            b2.vy += b1.spinY * 0.1;
+                        }
+
+                        const relativeVelocity = Math.hypot(b1.vx - b2.vx, b1.vy - b2.vy);
+                        if (relativeVelocity > 0.1) {
+                            playRetroSound('clack', Math.min(1.5, relativeVelocity * 0.15));
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+
+    function resolveTurnRules() {
+        const activePlayer = players[activePlayerIndex];
+        const nextPlayerIndex = 1 - activePlayerIndex;
+        const nextPlayer = players[nextPlayerIndex];
+
+        let switchTurn = true;
+        let cueBallScratched = false;
+        let eightBallPocketed = false;
+        let correctBallPocketed = false;
+        let incorrectBallPocketed = false;
+
+        const turnLogSummary = [];
+
+        for (let b of ballsPocketedThisTurn) {
+            if (b.number === 0) {
+                cueBallScratched = true;
+                b.isPocketed = false; 
+                b.x = TABLE_WIDTH * 0.25;
+                b.y = TABLE_HEIGHT * 0.5;
+                b.vx = 0;
+                b.vy = 0;
+                turnLogSummary.push("blanca entronerada (scratch)");
+            } else if (b.number === 8) {
+                eightBallPocketed = true;
+                turnLogSummary.push("bola 8 negra entronerada");
+            } else {
+                if (activePlayer.type) {
+                    if (b.type === activePlayer.type) {
+                        correctBallPocketed = true;
+                        turnLogSummary.push(`bola correcta ${b.number} (${b.type})`);
+                    } else {
+                        incorrectBallPocketed = true;
+                        turnLogSummary.push(`bola rival ${b.number} (${b.type})`);
+                    }
+                } else {
+                    activePlayer.type = b.type;
+                    nextPlayer.type = b.type === 'solids' ? 'stripes' : 'solids';
+                    correctBallPocketed = true;
+                    turnLogSummary.push(`grupo asignado: ${b.type === 'solids' ? 'sólidas' : 'rayadas'} mediante bola ${b.number}`);
+                    showToast(`¡${activePlayer.name} se queda con ${b.type === 'solids' ? 'SÓLIDAS' : 'RAYADAS'}!`);
+                }
+            }
+        }
+
+        if (cueBallScratched) {
+            isBallInHand = true;
+            switchTurn = true;
+            showToast("¡Falta! Bola blanca entronerada. Bola en mano.");
+            playRetroSound('scratch');
+            addSystemChatMessage(`${activePlayer.name} cometió falta (Scratch). Bola en mano para el rival.`);
+        } 
+        else if (eightBallPocketed) {
+            const remainingTargetBalls = balls.filter(b => b.number !== 0 && b.number !== 8 && !b.isPocketed && b.type === activePlayer.type);
+            
+            if (remainingTargetBalls.length === 0 && !cueBallScratched) {
+                showToast(`¡${activePlayer.name} GANA LA PARTIDA!`);
+                statusLog = `¡Fin de la partida! Ganador: ${activePlayer.name}`;
+                gamePhase = "gameover";
+                addSystemChatMessage(`¡La mesa ha concluido! Ganador: ${activePlayer.name}`);
+            } else {
+                showToast(`¡Falta! 8 embocada antes de tiempo. ${nextPlayer.name} gana.`);
+                statusLog = `Ganador por descalificación: ${nextPlayer.name}`;
+                gamePhase = "gameover";
+                addSystemChatMessage(`¡La mesa ha concluido! ${activePlayer.name} perdió al entronerar la 8 antes de limpiar su grupo.`);
+            }
+            renderStatusUI();
+            triggerGeminiCommentary(activePlayer.name, "embocó la bola 8 (final del juego)");
+            return;
+        }
+        else if (firstBallHitThisTurn === null) {
+            isBallInHand = true;
+            switchTurn = true;
+            showToast("¡Falta! No tocaste ninguna bola. Bola en mano.");
+            playRetroSound('scratch');
+            addSystemChatMessage(`${activePlayer.name} cometió falta (Sin contacto).`);
+        }
+        else if (activePlayer.type && firstBallHitThisTurn.type !== activePlayer.type) {
+            isBallInHand = true;
+            switchTurn = true;
+            showToast(`¡Falta! Primer golpe a bola rival. Bola en mano.`);
+            playRetroSound('scratch');
+            addSystemChatMessage(`${activePlayer.name} cometió falta al tocar primero una bola rival.`);
+        }
+        else if (correctBallPocketed) {
+            switchTurn = false;
+            showToast("¡Buen tiro! Sigues jugando.");
+        }
+
+        if (switchTurn) {
+            activePlayerIndex = nextPlayerIndex;
+        }
+
+        renderStatusUI();
+        
+        // Trigger Gemini Commentary on major turn events
+        if (turnLogSummary.length > 0) {
+            triggerGeminiCommentary(activePlayer.name, turnLogSummary.join(", "));
+        }
+
+        // Handle Bot artificial intelligence turn if mode is active
+        if (gameMode === 'ai' && activePlayerIndex === 1 && gamePhase !== "gameover") {
+            setTimeout(triggerAITurn, 1600);
+        }
+    }
+
+    function triggerAITurn() {
+        if (gamePhase === "gameover" || isMoving) return;
+
+        updateStatusMessage("El rival de IA está calculando su jugada...");
+
+        const aiGroup = players[1].type;
+        const validTargets = balls.filter(b => b.number !== 0 && !b.isPocketed && (aiGroup ? b.type === aiGroup : b.number !== 8));
+        
+        const targetList = validTargets.length > 0 ? validTargets : [eightBall];
+        const selectedTarget = targetList[Math.floor(Math.random() * targetList.length)];
+
+        if (!selectedTarget) return;
+
+        if (isBallInHand) {
+            whiteBall.x = TABLE_WIDTH * 0.25 + (Math.random() * 20 - 10);
+            whiteBall.y = TABLE_HEIGHT * 0.5 + (Math.random() * 40 - 20);
+            isBallInHand = false;
+        }
+
+        const dy = selectedTarget.y - whiteBall.y;
+        const dx = selectedTarget.x - whiteBall.x;
+        const baseAngle = Math.atan2(dy, dx);
+
+        const errorMargin = 0.04;
+        aimAngle = baseAngle + (Math.random() * errorMargin - errorMargin / 2);
+
+        const distToTarget = Math.hypot(dx, dy);
+        currentPower = Math.min(100, Math.max(35, (distToTarget / 400) * 100));
+
+        let simAimStep = 0;
+        const simInterval = setInterval(() => {
+            simAimStep++;
+            aimAngle += (Math.random() * 0.01 - 0.005);
+            updatePowerIndicator(currentPower * (simAimStep / 10));
+            
+            if (simAimStep >= 10) {
+                clearInterval(simInterval);
+                shootBall();
+                
+                // Triggers context-aware Gemini message from AI opponent on shoot
+                if (Math.random() > 0.4) {
+                    setTimeout(() => {
+                        triggerGeminiOpponentResponse("Acabo de realizar un tiro hacia la bola número " + selectedTarget.number);
+                    }, 800);
+                }
+            }
+        }, 100);
+    }
+
+    function drawAimGuidelines() {
+        if (isMoving || isBallInHand || gamePhase === "gameover") return;
+
+        const startX = whiteBall.x;
+        const startY = whiteBall.y;
+
+        const dx = -Math.cos(aimAngle);
+        const dy = -Math.sin(aimAngle);
+
+        let closestIntersection = null;
+        let closestDist = Infinity;
+        let targetBallHit = null;
+
+        for (let b of balls) {
+            if (b.number === 0 || b.isPocketed) continue;
+
+            const toBallX = b.x - startX;
+            const toBallY = b.y - startY;
+            const projection = toBallX * dx + toBallY * dy;
+
+            if (projection > 0) { 
+                const closestPointX = startX + dx * projection;
+                const closestPointY = startY + dy * projection;
+                const perpDist = Math.hypot(b.x - closestPointX, b.y - closestPointY);
+
+                if (perpDist < BALL_RADIUS * 2) {
+                    const d = Math.sqrt((BALL_RADIUS * 2) * (BALL_RADIUS * 2) - perpDist * perpDist);
+                    const hitDist = projection - d;
+
+                    if (hitDist > 0 && hitDist < closestDist) {
+                        closestDist = hitDist;
+                        closestIntersection = { x: startX + dx * hitDist, y: startY + dy * hitDist };
+                        targetBallHit = b;
+                    }
+                }
+            }
+        }
+
+        ctx.save();
+        
+        if (closestIntersection) {
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(closestIntersection.x, closestIntersection.y);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(closestIntersection.x, closestIntersection.y, BALL_RADIUS, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fill();
+
+            if (showExtendedGuide) {
+                const impactNormalX = targetBallHit.x - closestIntersection.x;
+                const impactNormalY = targetBallHit.y - closestIntersection.y;
+                const impactHypot = Math.hypot(impactNormalX, impactNormalY);
+                const tnx = impactNormalX / impactHypot;
+                const tny = impactNormalY / impactHypot;
+
+                ctx.beginPath();
+                ctx.setLineDash([2, 3]);
+                ctx.strokeStyle = '#facc15'; 
+                ctx.moveTo(targetBallHit.x, targetBallHit.y);
+                ctx.lineTo(targetBallHit.x + tnx * 60, targetBallHit.y + tny * 60);
+                ctx.stroke();
+
+                const cueDeflectX = -tny; 
+                const cueDeflectY = tnx;
+                const directionSign = (dx * cueDeflectX + dy * cueDeflectY) > 0 ? 1 : -1;
+
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.moveTo(closestIntersection.x, closestIntersection.y);
+                ctx.lineTo(closestIntersection.x + cueDeflectX * directionSign * 40, closestIntersection.y + cueDeflectY * directionSign * 40);
+                ctx.stroke();
+            }
+        } else {
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX + dx * 200, startY + dy * 200);
+            ctx.stroke();
+        }
+
+        const stickDistance = isDragging ? dragDistance + 12 : 12;
+        const stickLen = 220;
+        const stickBackX = startX + (-dx) * (stickDistance + stickLen);
+        const stickBackY = startY + (-dy) * (stickDistance + stickLen);
+        const stickFrontX = startX + (-dx) * stickDistance;
+        const stickFrontY = startY + (-dy) * stickDistance;
+
+        const cueGrad = ctx.createLinearGradient(stickFrontX, stickFrontY, stickBackX, stickBackY);
+        cueGrad.addColorStop(0, '#fef08a'); 
+        cueGrad.addColorStop(0.04, '#a16207'); 
+        cueGrad.addColorStop(0.3, '#d97706'); 
+        cueGrad.addColorStop(0.7, '#78350f'); 
+        cueGrad.addColorStop(1, '#06b6d4'); 
+
+        ctx.beginPath();
+        ctx.strokeStyle = cueGrad;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.moveTo(stickFrontX, stickFrontY);
+        ctx.lineTo(stickBackX, stickBackY);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function drawTable() {
+        ctx.clearRect(0, 0, TABLE_WIDTH, TABLE_HEIGHT);
+
+        ctx.fillStyle = '#2d1500';
+        ctx.fillRect(0, 0, TABLE_WIDTH, TABLE_HEIGHT);
+
+        ctx.fillStyle = '#1e5436'; 
+        ctx.fillRect(CUSHION_LEFT - 4, CUSHION_TOP - 4, TABLE_WIDTH - (CUSHION_LEFT * 2) + 8, TABLE_HEIGHT - (CUSHION_TOP * 2) + 8);
+
+        ctx.fillStyle = '#1b7a43'; 
+        ctx.fillRect(CUSHION_LEFT, CUSHION_TOP, CUSHION_RIGHT - CUSHION_LEFT, CUSHION_BOTTOM - CUSHION_TOP);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        const diamondsX = [TABLE_WIDTH * 0.25, TABLE_WIDTH * 0.5, TABLE_WIDTH * 0.75];
+        for (let dx of diamondsX) {
+            ctx.beginPath();
+            ctx.arc(dx, TABLE_HEIGHT * 0.5, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.moveTo(TABLE_WIDTH * 0.29, CUSHION_TOP);
+        ctx.lineTo(TABLE_WIDTH * 0.29, CUSHION_BOTTOM);
+        ctx.stroke();
+
+        for (let pocket of pockets) {
+            ctx.beginPath();
+            ctx.arc(pocket.x, pocket.y, pocket.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#08080c';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(pocket.x, pocket.y, pocket.radius + 2, 0, Math.PI * 2);
+            ctx.strokeStyle = '#d97706'; 
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+
+        for (let b of balls) {
+            if (b.isPocketed) continue;
+
+            ctx.beginPath();
+            ctx.arc(b.x + 2, b.y + 2, b.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+            ctx.fillStyle = b.color;
+            ctx.fill();
+
+            if (b.type === 'stripes') {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(b.x - b.radius, b.y - b.radius * 0.4, b.radius * 2, b.radius * 0.8);
+                ctx.restore();
+            }
+
+            if (b.number !== 0) {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius * 0.45, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+
+                ctx.font = 'bold 7px "Courier Prime", monospace';
+                ctx.fillStyle = '#000000';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(b.number, b.x, b.y);
+            }
+
+            const gradient = ctx.createRadialGradient(
+                b.x - b.radius * 0.3, b.y - b.radius * 0.3, 1,
+                b.x, b.y, b.radius
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+            gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+        }
+
+        drawAimGuidelines();
+
+        if (isBallInHand && !isMoving) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.8)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.arc(whiteBall.x, whiteBall.y, BALL_RADIUS + 4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.font = '9px Arial';
+            ctx.fillStyle = '#22d3ee';
+            ctx.textAlign = 'center';
+            ctx.fillText('¡Arrastra la bola para colocarla!', whiteBall.x, whiteBall.y - 18);
+            ctx.restore();
+        }
+    }
+
+    function startLoop() {
+        function loop() {
+            runPhysicsTicks();
+            checkPhysicsLoop();
+            drawTable();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    }
+
+    const spinWidget = document.getElementById('spin-widget');
+    const spinMarker = document.getElementById('spin-marker');
+
+    spinWidget.addEventListener('mousedown', handleSpinPointerDown);
+    spinWidget.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        handleSpinPointerDown(e);
+    });
+
+    function handleSpinPointerDown(e) {
+        window.addEventListener('mousemove', handleSpinPointerMove);
+        window.addEventListener('touchmove', handleSpinPointerMove);
+        window.addEventListener('mouseup', handleSpinPointerUp);
+        window.addEventListener('touchend', handleSpinPointerUp);
+        handleSpinPointerMove(e);
+    }
+
+    function handleSpinPointerMove(e) {
+        const rect = spinWidget.getBoundingClientRect();
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        }
+
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        let dx = clientX - centerX;
+        let dy = clientY - centerY;
+
+        const maxRadius = rect.width / 2 - 8;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > maxRadius) {
+            dx = (dx / dist) * maxRadius;
+            dy = (dy / dist) * maxRadius;
+        }
+
+        englishX = dx / maxRadius;
+        englishY = dy / maxRadius;
+
+        const markerX = rect.width / 2 + dx - 6; 
+        const markerY = rect.height / 2 + dy - 6;
+        spinMarker.style.left = `${markerX}px`;
+        spinMarker.style.top = `${markerY}px`;
+    }
+
+    function handleSpinPointerUp() {
+        window.removeEventListener('mousemove', handleSpinPointerMove);
+        window.removeEventListener('touchmove', handleSpinPointerMove);
+    }
+
+    spinWidget.addEventListener('dblclick', () => {
+        englishX = 0;
+        englishY = 0;
+        spinMarker.style.left = `calc(50% - 6px)`;
+        spinMarker.style.top = `calc(50% - 6px)`;
+        showToast("Efecto de bola centrado.");
+    });
+
+    function updatePowerIndicator(power) {
+        const bar = document.getElementById('power-indicator');
+        const text = document.getElementById('power-percent');
+        if (bar && text) {
+            bar.style.height = `${power}%`;
+            text.textContent = `${Math.round(power)}%`;
+        }
+    }
+
+    function setGameMode(mode) {
+        gameMode = mode;
+        const pvpBtn = document.getElementById('btn-pvp');
+        const aiBtn = document.getElementById('btn-vs-ai');
+        const pracBtn = document.getElementById('btn-practice');
+
+        [pvpBtn, aiBtn, pracBtn].forEach(btn => {
+            btn.classList.add('bg-slate-700', 'opacity-70');
+            btn.classList.remove('bg-purple-700', 'active-turn');
+        });
+
+        if (mode === 'pvp') {
+            pvpBtn.classList.remove('bg-slate-700', 'opacity-70');
+            pvpBtn.classList.add('bg-purple-700');
+            players[0].name = "Jugador 1";
+            players[1].name = "Jugador 2";
+            document.getElementById('rival-status').textContent = "Local";
+        } else if (mode === 'ai') {
+            aiBtn.classList.remove('bg-slate-700', 'opacity-70');
+            aiBtn.classList.add('bg-purple-700');
+            players[0].name = "Tú";
+            players[1].name = "Yahoo! Bot";
+            document.getElementById('rival-status').textContent = "Gemini AI";
+            showToast("Modo Versus Gemini AI activado.");
+        } else if (mode === 'practice') {
+            pracBtn.classList.remove('bg-slate-700', 'opacity-70');
+            pracBtn.classList.add('bg-purple-700');
+            players[0].name = "Jugador 1";
+            players[1].name = "Práctica";
+            document.getElementById('rival-status').textContent = "Solo";
+        }
+
+        resetTable();
+    }
+
+    function resetTable() {
+        players.forEach(p => {
+            p.type = null;
+            p.pocketed = 0;
+        });
+        activePlayerIndex = 0;
+        setupClassicRack();
+        showToast("¡Partida Reiniciada!");
+        addSystemChatMessage("La mesa ha sido re-organizada para un nuevo juego.");
+    }
+
+    function updateStatusMessage(msg) {
+        statusLog = msg;
+        const banner = document.getElementById('status-message');
+        if (banner) banner.textContent = msg;
+    }
+
+    function renderStatusUI() {
+        const p1Card = document.getElementById('player1-card');
+        const p2Card = document.getElementById('player2-card');
+        const turnBanner = document.getElementById('turn-banner');
+
+        document.getElementById('p1-name').textContent = players[0].name;
+        document.getElementById('p2-name').textContent = players[1].name;
+
+        const getBadgeText = (type) => {
+            if (type === 'solids') return 'SÓLIDAS (1-7)';
+            if (type === 'stripes') return 'RAYADAS (9-15)';
+            return 'Por asignar';
+        };
+        document.getElementById('p1-type-badge').textContent = getBadgeText(players[0].type);
+        document.getElementById('p2-type-badge').textContent = getBadgeText(players[1].type);
+
+        p1Card.className = "p-2 rounded-lg border flex flex-col items-center transition-all " + 
+            (activePlayerIndex === 0 && gamePhase !== "gameover" ? "border-yellow-400 bg-yellow-400/10 active-turn" : "border-transparent bg-transparent");
+        
+        p2Card.className = "p-2 rounded-lg border flex flex-col items-center transition-all " + 
+            (activePlayerIndex === 1 && gamePhase !== "gameover" ? "border-cyan-400 bg-cyan-400/10 active-turn" : "border-transparent bg-transparent");
+
+        if (gamePhase === "gameover") {
+            turnBanner.className = "bg-green-500 text-slate-950 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wider uppercase";
+            turnBanner.textContent = "PARTIDA CONCLUIDA";
+        } else {
+            turnBanner.className = "bg-yellow-400 text-slate-950 px-4 py-1.5 rounded-full font-extrabold text-xs tracking-wider uppercase";
+            turnBanner.textContent = `Turno de: ${players[activePlayerIndex].name}`;
+        }
+
+        renderMiniBalls();
+    }
+
+    function renderMiniBalls() {
+        const p1List = document.getElementById('p1-balls-left');
+        const p2List = document.getElementById('p2-balls-left');
+        p1List.innerHTML = '';
+        p2List.innerHTML = '';
+
+        for (let b of balls) {
+            if (b.number === 0 || b.number === 8) continue;
+            
+            const mini = document.createElement('div');
+            mini.className = "w-3 h-3 rounded-full border border-black/30 shadow-sm relative overflow-hidden";
+            mini.style.backgroundColor = b.color;
+            if (b.type === 'stripes') {
+                mini.innerHTML = `<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-white"></div>`;
+            }
+
+            if (b.isPocketed) {
+                mini.classList.add('opacity-30'); 
+            }
+
+            if (players[0].type === b.type) {
+                p1List.appendChild(mini);
+            } else if (players[1].type === b.type) {
+                p2List.appendChild(mini);
+            } else {
+                const mini2 = mini.cloneNode(true);
+                p1List.appendChild(mini);
+                p2List.appendChild(mini2);
+            }
+        }
+    }
+
+    const chatMessages = document.getElementById('chat-messages');
+
+    async function executeGeminiCall(userPrompt, systemInstruction) {
+        // Retrieve custom key or default empty (which platform handles)
+        const userProvidedKey = document.getElementById('gemini-key-input').value.trim();
+        const apiKey = userProvidedKey || ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+        
+        const payload = {
+            contents: [{ parts: [{ text: userPrompt }] }],
+            systemInstruction: {
+                parts: [{ text: systemInstruction }]
+            }
+        };
+
+        // Exponential backoff logic for stable API interaction
+        let delay = 1000;
+        for (let i = 0; i < 3; i++) {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    return result?.candidates?.[0]?.content?.parts?.[0]?.text || "No se recibió respuesta.";
+                }
+                if (response.status === 429) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                    continue;
+                }
+                throw new Error(`API Error status ${response.status}`);
+            } catch (err) {
+                if (i === 2) throw err;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2;
+            }
+        }
+    }
+
+    // Helper to serialize game layout state into structured context
+    function getSerializedGameState() {
+        const p1 = players[0];
+        const p2 = players[1];
+        
+        const activeBalls = balls.filter(b => !b.isPocketed && b.number !== 0);
+        const solidsLeft = activeBalls.filter(b => b.type === 'solids').map(b => b.number);
+        const stripesLeft = activeBalls.filter(b => b.type === 'stripes').map(b => b.number);
+        const isEightBallLeft = !eightBall.isPocketed;
+
+        return `
+        Mesa de Billar (Yahoo Retro Classic):
+        - Modo de Juego: ${gameMode}
+        - Turno de disparo actual: ${players[activePlayerIndex].name}
+        - Estado de bola en mano (foul): ${isBallInHand ? "Sí, el jugador puede mover la blanca" : "No, tiro desde la posición actual"}
+        - Jugador 1 (${p1.name}): Grupo asignado: ${p1.type || "Ninguno aún"}. Bolas restantes del oponente en juego: ${p1.type === 'solids' ? solidsLeft.join(', ') : stripesLeft.join(', ')}
+        - Jugador 2 (${p2.name} - Gemini): Grupo asignado: ${p2.type || "Ninguno aún"}. Bolas de tu grupo en juego: ${p2.type === 'solids' ? solidsLeft.join(', ') : stripesLeft.join(', ')}
+        - Bola 8 Negra en juego: ${isEightBallLeft ? "Sí, aún en la mesa" : "No, ha sido entronerada"}
+        - Posición de bola blanca: (X: ${Math.round(whiteBall.x)}, Y: ${Math.round(whiteBall.y)})
+        `;
+    }
+
+    async function sendChatMessage(text) {
+        if (!text.trim()) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = "text-[#38bdf8]";
+        messageDiv.innerHTML = `<strong class="font-bold text-sky-400">${players[0].name}:</strong> ${text}`;
+        chatMessages.appendChild(messageDiv);
+        scrollChatToBottom();
+
+        // If practice mode or PVP, do not invoke AI response
+        if (gameMode !== 'ai') return;
+
+        // Visual feedback typing indicator
+        const typingDiv = document.createElement('div');
+        typingDiv.className = "text-[#c084fc] italic text-[11px] font-mono animate-pulse";
+        typingDiv.id = "typing-indicator";
+        typingDiv.innerHTML = `Yahoo! Bot está escribiendo...`;
+        chatMessages.appendChild(typingDiv);
+        scrollChatToBottom();
+
+        try {
+            const systemPrompt = `
+            Actúas como un nostálgico y divertido jugador de "Yahoo! Billares" en el año 2004. 
+            Te encuentras jugando una partida online contra el usuario en una sala de chat clásica.
+            Usa jerga del internet de la época de MSN/Yahoo (como xd, lol, ¬¬, :), :P, k ase, u there?, oye, oiga, etc.). 
+            Mantén tus mensajes cortos (1-2 líneas), informales, a veces un poco competitivos o graciosos.
+            Responde de forma contextualmente consciente de la partida utilizando los datos de la mesa adjuntos.
+            `;
+            const currentTableContext = getSerializedGameState();
+            const prompt = `
+            Estado actual de la mesa:
+            ${currentTableContext}
+
+            El usuario te acaba de enviar este mensaje de chat: "${text}"
+            Respóndele con tu personalidad retro.
+            `;
+
+            const aiResponse = await executeGeminiCall(prompt, systemPrompt);
+            
+            // Clean typing indicator
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+
+            addOpponentChatMessage(aiResponse);
+        } catch (error) {
+            console.error("Gemini Chat failed", error);
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+            
+            // Retro static fallback reply
+            addOpponentChatMessage("se me cayo la conexion xd, oye juegas muy bien lol");
+        }
+    }
+
+    async function triggerGeminiOpponentResponse(actionEventText) {
+        if (gameMode !== 'ai') return;
+
+        const systemPrompt = `
+            Actúas como un jugador de Yahoo! Games en el año 2004. Reacciona de forma corta (máximo 1 línea) 
+            y con estilo retro de chat de la época de Yahoo! Messenger (usa abreviaciones como xd, lol, :), ufff).
+            Estás reaccionando al evento que acaba de ocurrir en la mesa.
+        `;
+
+        const prompt = `
+            Estado de la mesa:
+            ${getSerializedGameState()}
+
+            Evento reciente en el juego: "${actionEventText}"
+            Escribe un mensaje de chat corto reaccionando a esto.
+        `;
+
+        try {
+            const aiResponse = await executeGeminiCall(prompt, systemPrompt);
+            addOpponentChatMessage(aiResponse);
+        } catch (e) {
+            console.debug("Silent opponent trigger fail", e);
+        }
+    }
+
+    async function triggerGeminiCommentary(playerName, actionDetails) {
+        const systemPrompt = `
+            Eres el locutor / moderador oficial del Lobby de Yahoo! Billares (Room #24). 
+            Tu estilo es ingenioso, lleno de bromas retro, nostálgico y muy animado. 
+            Genera un comentario corto de 1 línea para anunciar en el canal general de la sala.
+        `;
+
+        const prompt = `
+            El jugador "${playerName}" acaba de realizar el siguiente tiro con estos resultados: "${actionDetails}".
+            Genera un anuncio gracioso al estilo moderador del lobby.
+        `;
+
+        try {
+            const commentary = await executeGeminiCall(prompt, systemPrompt);
+            addSystemChatMessage(commentary);
+        } catch (e) {
+            console.debug("Commentary bypass", e);
+        }
+    }
+
+    async function askGeminiCoach() {
+        const btn = document.getElementById('btn-coach-advice');
+        const icon = document.getElementById('coach-btn-icon');
+        const btnText = document.getElementById('coach-btn-text');
+        const output = document.getElementById('coach-content-output');
+
+        // Swap to the coach tab automatically
+        switchTab('coach');
+
+        // Loading visual state
+        btn.disabled = true;
+        btnText.textContent = "Analizando Mesa...";
+        icon.className = "fa-solid fa-spinner animate-spin text-cyan-400";
+        output.innerHTML = `<div class="flex flex-col items-center justify-center p-8 space-y-3">
+            <i class="fa-solid fa-wand-magic-sparkles text-3xl text-cyan-400 animate-pulse"></i>
+            <span class="text-[11px] font-mono text-cyan-300">Gemini está calculando rebotes, ángulos y desvíos tácticos...</span>
+        </div>`;
+
+        const systemPrompt = `
+            Eres el Gran Maestro Coach de Yahoo! Billares Retro. Tu trabajo es dar consejos de física hiper-precisos, 
+            estilo de trayectoria y desvío para guiar al usuario. 
+            Sé alentador, táctico y directo. Estructura tu respuesta en 3 secciones cortas:
+            1. 🎯 RECOMENDACIÓN DE TIRO: Qué bola golpear y a qué tronera apuntar.
+            2. ⚡ VECTOR (ÁNGULO Y PODER): Ángulo recomendado en grados y fuerza necesaria en porcentaje (ej: 45% poder).
+            3. 🌀 EFECTO (SPIN): Si conviene usar English (arriba, abajo, izquierda o derecha) y por qué.
+        `;
+
+        const activeBallsCoordinates = balls
+            .filter(b => !b.isPocketed)
+            .map(b => `Bola ${b.number} (${b.type}): X=${Math.round(b.x)}, Y=${Math.round(b.y)}`)
+            .join('\n');
+
+        const prompt = `
+            Estado actual de la física de la mesa:
+            - Bola Blanca: X=${Math.round(whiteBall.x)}, Y=${Math.round(whiteBall.y)}
+            - Troneras disponibles (Límites: X=36 a 764, Y=36 a 364):
+              * Top-Left: X=36, Y=36
+              * Top-Middle: X=400, Y=32
+              * Top-Right: X=764, Y=36
+              * Bottom-Left: X=36, Y=364
+              * Bottom-Middle: X=400, Y=368
+              * Bottom-Right: X=764, Y=364
+            
+            Ubicación de todas las bolas activas:
+            ${activeBallsCoordinates}
+
+            Mi grupo asignado es: ${players[0].type || "Aún libre/sin asignar"}.
+            Dame la mejor jugada estratégica posible.
+        `;
+
+        try {
+            const advice = await executeGeminiCall(prompt, systemPrompt);
+            output.innerHTML = advice;
+            showToast("Análisis del Consejero Listo.");
+        } catch (error) {
+            console.error("Coach API failed", error);
+            output.innerHTML = `<span class="text-red-400 font-mono">Error de conexión: No se pudo contactar con el Consejero de Gemini. Verifica tu API Key o reintenta en unos instantes.</span>`;
+        } finally {
+            btn.disabled = false;
+            btnText.textContent = "Pedir Consejo de Tiro";
+            icon.className = "fa-solid fa-brain";
+        }
+    }
+
+    function addOpponentChatMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = "text-[#c084fc]";
+        messageDiv.innerHTML = `<strong class="font-bold text-purple-300">${players[1].name}:</strong> ${text}`;
+        chatMessages.appendChild(messageDiv);
+        scrollChatToBottom();
+    }
+
+    function addSystemChatMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = "text-amber-400 font-mono text-[10px]";
+        messageDiv.innerHTML = `[Sistema]: ${text}`;
+        chatMessages.appendChild(messageDiv);
+        scrollChatToBottom();
+    }
+
+    function scrollChatToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleChatSubmit(event) {
+        event.preventDefault();
+        const input = document.getElementById('chat-input');
+        sendChatMessage(input.value);
+        input.value = '';
+    }
+
+    function switchTab(tabId) {
+        const tabChat = document.getElementById('tab-content-chat');
+        const tabCoach = document.getElementById('tab-content-coach');
+        const btnChat = document.getElementById('tab-btn-chat');
+        const btnCoach = document.getElementById('tab-btn-coach');
+
+        if (tabId === 'chat') {
+            tabChat.classList.remove('hidden');
+            tabChat.classList.add('flex');
+            tabCoach.classList.add('hidden');
+            tabCoach.classList.remove('flex');
+            
+            btnChat.classList.add('text-yellow-400', 'border-yellow-400');
+            btnChat.classList.remove('text-purple-400', 'border-transparent');
+            btnCoach.classList.add('text-purple-400', 'border-transparent');
+            btnCoach.classList.remove('text-yellow-400', 'border-yellow-400');
+        } else {
+            tabCoach.classList.remove('hidden');
+            tabCoach.classList.add('flex');
+            tabChat.classList.add('hidden');
+            tabChat.classList.remove('flex');
+
+            btnCoach.classList.add('text-cyan-400', 'border-cyan-400');
+            btnCoach.classList.remove('text-purple-400', 'border-transparent');
+            btnChat.classList.add('text-purple-400', 'border-transparent');
+            btnChat.classList.remove('text-cyan-400', 'border-cyan-400');
+        }
+    }
+
+    function showToast(text) {
+        const toast = document.getElementById('game-toast');
+        const toastText = document.getElementById('game-toast-text');
+        
+        if (toast && toastText) {
+            toastText.textContent = text;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translate(-50%, 0)';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, 1rem)';
+            }, 2500);
+        }
+    }
+
+    // Simple ping calculator test to illustrate active connection quality
+    async function pingGeminiService() {
+        const start = performance.now();
+        const label = document.getElementById('api-ping-label');
+        try {
+            // Dry lightweight test query
+            await executeGeminiCall("ping", "respond only with 'pong'");
+            const latency = Math.round(performance.now() - start);
+            label.textContent = `${latency}ms`;
+            label.className = latency < 400 ? "text-green-400 font-bold" : "text-yellow-400 font-bold";
+        } catch (e) {
+            label.textContent = "Activo";
+            label.className = "text-cyan-400 font-bold";
+        }
+    }
+</script>
+</body>
+</html>
